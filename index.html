@@ -4,661 +4,685 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DU Student Attendance System</title>
+    <title>Delhi University Attendance System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        .student-row:hover {
-            background-color: #f0f9ff;
+        .gradient-bg {
+            background: linear-gradient(135deg, #1a3b6d 0%, #3b5998 100%);
         }
-        .attendance-btn {
-            transition: all 0.2s ease;
+        .attendance-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-        .attendance-btn:hover {
-            transform: scale(1.05);
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
         }
     </style>
 </head>
 <body class="bg-gray-50">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <header class="mb-8 text-center">
-            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/9b9a378a-5c6c-45c8-bf6e-01c2d9a551de.png" alt="University of Delhi logo with iconic brick-red architecture and white lettering" class="mx-auto mb-4 rounded-lg shadow-md" />
-            <h1 class="text-3xl font-bold text-gray-800">Student Attendance Management System</h1>
-            <p class="text-lg text-gray-600 mt-2">Department of Computer Science | Batch 2023</p>
-        </header>
-
-        <!-- Control Panel -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div class="flex flex-col md:flex-row gap-4 mb-6">
-                <div class="flex-1">
-                    <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Select Subject</label>
-                    <select id="subject" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="dsa">Data Structures & Algorithms</option>
-                        <option value="dbms">Database Management Systems</option>
-                        <option value="os">Operating Systems</option>
-                        <option value="cn">Computer Networks</option>
-                        <option value="se">Software Engineering</option>
-                    </select>
-                </div>
-                <div class="flex-1">
-                    <label for="class-date" class="block text-sm font-medium text-gray-700 mb-1">Class Date</label>
-                    <input type="date" id="class-date" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div class="flex items-end">
-                    <button id="add-student" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
-                        Add Student
-                    </button>
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="hidden md:flex sidebar bg-white w-64 border-r flex-col">
+            <div class="p-4 border-b">
+                <div class="flex items-center">
+                    <img src="https://placehold.co/40x40" alt="Delhi University logo - circular emblem with DU initials" class="w-10 h-10 rounded-full mr-3">
+                    <h1 class="text-xl font-bold text-gray-700">DU Attendance</h1>
                 </div>
             </div>
-
-            <div class="flex justify-between">
-                <button id="mark-all" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                    Mark All Present
-                </button>
-                <div class="flex gap-2">
-                    <button id="export-excel" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
-                        Export to Excel
-                    </button>
-                    <button id="save-local" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
-                        Save Locally
-                    </button>
-                </div>
+            <nav class="flex-1 p-4 space-y-2">
+                <a href="#" class="block py-2 px-4 rounded bg-blue-50 text-blue-600 font-medium">Dashboard</a>
+                <a href="#students" class="block py-2 px-4 rounded hover:bg-gray-100 text-gray-700">Students</a>
+                <a href="#attendance" class="block py-2 px-4 rounded hover:bg-gray-100 text-gray-700">Attendance</a>
+                <a href="#export" class="block py-2 px-4 rounded hover:bg-gray-100 text-gray-700">Export Data</a>
+            </nav>
+            <div class="p-4 border-t">
+                <p class="text-sm text-gray-500">Developer Mode Active</p>
             </div>
         </div>
 
-        <!-- Attendance Table -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No.</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="student-list" class="bg-white divide-y divide-gray-200">
-                    <!-- Students will be added here -->
-                </tbody>
-            </table>
-        </div>
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Header -->
+            <header class="gradient-bg text-white p-4 shadow">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold">Delhi University Attendance System</h1>
+                        <p class="text-blue-100">Department of Computer Science</p>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="bg-white text-blue-600 rounded-full px-4 py-1 text-sm font-medium">
+                            Admin Mode
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-        <!-- Footer -->
-        <footer class="mt-12 text-center text-gray-500 text-sm">
-            <p>© 2023 University of Delhi - Department of Computer Science</p>
-            <p class="mt-1">Developed with ❤️ for education</p>
-        </footer>
+            <main class="p-6">
+                <!-- Dashboard Overview -->
+                <section id="dashboard" class="mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="font-medium text-gray-500 mb-2">Total Students</h3>
+                            <p class="text-3xl font-bold" id="totalStudents">47</p>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="font-medium text-gray-500 mb-2">Attendance Today</h3>
+                            <p class="text-3xl font-bold" id="attendanceToday">0</p>
+                        </div>
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="font-medium text-gray-500 mb-2">Subjects</h3>
+                            <p class="text-3xl font-bold">5</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold">Quick Actions</h2>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <button onclick="scrollToSection('students')" class="bg-white border border-blue-500 text-blue-500 hover:bg-blue-50 rounded-lg p-4 text-center transition">
+                                <i class="fas fa-users text-xl mb-2"></i>
+                                <p>Manage Students</p>
+                            </button>
+                            <button onclick="scrollToSection('attendance')" class="bg-white border border-green-500 text-green-500 hover:bg-green-50 rounded-lg p-4 text-center transition">
+                                <i class="fas fa-clipboard-check text-xl mb-2"></i>
+                                <p>Take Attendance</p>
+                            </button>
+                            <button onclick="scrollToSection('export')" class="bg-white border border-purple-500 text-purple-500 hover:bg-purple-50 rounded-lg p-4 text-center transition">
+                                <i class="fas fa-file-export text-xl mb-2"></i>
+                                <p>Export Data</p>
+                            </button>
+                            <button onclick="printCurrentAttendance()" class="bg-white border border-gray-500 text-gray-500 hover:bg-gray-50 rounded-lg p-4 text-center transition">
+                                <i class="fas fa-print text-xl mb-2"></i>
+                                <p>Print Today</p>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Student Management -->
+                <section id="students" class="mb-8">
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-6 border-b">
+                            <div class="flex justify-between items-center">
+                                <h2 class="text-lg font-semibold">Student Management</h2>
+                                <button onclick="addNewStudentDialog()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Add Student</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No.</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentList" class="bg-white divide-y divide-gray-200">
+                                    <!-- Students will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-4 border-t text-center">
+                            <p class="text-sm text-gray-500">Total: <span id="studentCount">47</span> students</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Attendance Section -->
+                <section id="attendance" class="mb-8">
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-6 border-b">
+                            <div class="flex justify-between items-center">
+                                <h2 class="text-lg font-semibold">Daily Attendance</h2>
+                                <div class="flex space-x-3">
+                                    <select id="subjectSelect" class="border rounded-lg px-3 py-2">
+                                        <option value="math">Mathematics</option>
+                                        <option value="english">English</option>
+                                        <option value="physics">Physics</option>
+                                        <option value="chemistry">Chemistry</option>
+                                        <option value="cs">Computer Science</option>
+                                    </select>
+                                    <input type="date" id="attendanceDate" class="border rounded-lg px-3 py-2">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No.</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendanceList" class="bg-white divide-y divide-gray-200">
+                                    <!-- Attendance records will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-4 border-t flex justify-between">
+                            <button onclick="markAllPresent()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">Mark All Present</button>
+                            <button onclick="saveAttendance()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Save Attendance</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Export Section -->
+                <section id="export" class="mb-8">
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-6 border-b">
+                            <h2 class="text-lg font-semibold">Export Attendance Data</h2>
+                        </div>
+                        <div class="p-6">
+                            <div class="mb-6">
+                                <h3 class="font-medium mb-3">Select Date Range</h3>
+                                <div class="flex flex-wrap gap-3">
+                                    <input type="date" id="exportStartDate" class="border rounded-lg px-3 py-2">
+                                    <span class="self-center">to</span>
+                                    <input type="date" id="exportEndDate" class="border rounded-lg px-3 py-2">
+                                    <select id="exportSubject" class="border rounded-lg px-3 py-2">
+                                        <option value="all">All Subjects</option>
+                                        <option value="math">Mathematics</option>
+                                        <option value="english">English</option>
+                                        <option value="physics">Physics</option>
+                                        <option value="chemistry">Chemistry</option>
+                                        <option value="cs">Computer Science</option>
+                                    </select>
+                                    <button onclick="generateExportData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Generate Report</button>
+                                </div>
+                            </div>
+                            <div class="space-y-4" id="exportResults">
+                                <!-- Export options will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
     </div>
 
-    <!-- Add Student Modal -->
-    <div id="student-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full">
-            <h2 class="text-xl font-bold mb-4">Add New Student</h2>
-            <div class="space-y-4">
+    <!-- Student Edit Modal -->
+    <div id="studentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-md">
+            <div class="p-6 border-b">
+                <h3 class="text-lg font-semibold" id="modalTitle">Edit Student</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="editStudentId">
                 <div>
-                    <label for="new-rollno" class="block text-sm font-medium text-gray-700">Roll Number</label>
-                    <input type="text" id="new-rollno" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                    <label class="block text-gray-700 mb-1">Roll Number</label>
+                    <input type="text" id="editRollNo" class="w-full border rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label for="new-name" class="block text-sm font-medium text-gray-700">Student Name</label>
-                    <input type="text" id="new-name" class="w-full px-4 py-2 border border-gray-300 rounded-md">
+                    <label class="block text-gray-700 mb-1">Name</label>
+                    <input type="text" id="editName" class="w-full border rounded-lg px-3 py-2">
                 </div>
-                <div class="flex justify-end space-x-2 pt-4">
-                    <button id="cancel-add" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md">Cancel</button>
-                    <button id="confirm-add" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add Student</button>
+                <div>
+                    <label class="block text-gray-700 mb-1">Department</label>
+                    <input type="text" id="editDepartment" class="w-full border rounded-lg px-3 py-2">
                 </div>
+            </div>
+            <div class="p-4 border-t flex justify-end space-x-3">
+                <button onclick="closeModal('studentModal')" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onclick="saveStudent()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-md">
+            <div class="p-6 border-b">
+                <h3 class="text-lg font-semibold">Confirm</h3>
+            </div>
+            <div class="p-6">
+                <p id="confirmMessage">Are you sure you want to delete this student?</p>
+            </div>
+            <div class="p-4 border-t flex justify-end space-x-3">
+                <button onclick="closeModal('confirmModal')" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onclick="confirmAction()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" id="confirmButton">Delete</button>
             </div>
         </div>
     </div>
 
     <script>
+        // Sample student data - in real app this would come from database
+        let students = [
+            { id: 1, rollNo: 'DU2023001', name: 'Rahul Sharma', department: 'Computer Science' },
+            { id: 2, rollNo: 'DU2023002', name: 'Priya Patel', department: 'Physics' },
+            { id: 3, rollNo: 'DU2023003', name: 'Amit Singh', department: 'Chemistry' },
+            { id: 4, rollNo: 'DU2023004', name: 'Neha Gupta', department: 'Mathematics' },
+            { id: 5, rollNo: 'DU2023005', name: 'Deepak Kumar', department: 'English' }
+        ];
+
+        // Generate remaining students
+        for (let i = 6; i <= 47; i++) {
+            students.push({
+                id: i,
+                rollNo: `DU2023${String(i).padStart(3, '0')}`,
+                name: `Student ${i}`,
+                department: i % 5 === 0 ? 'English' : 
+                          i % 4 === 0 ? 'Mathematics' : 
+                          i % 3 === 0 ? 'Chemistry' : 
+                          i % 2 === 0 ? 'Physics' : 'Computer Science'
+            });
+        }
+
+        // Attendance data by subject and date
+        let attendanceData = {
+            math: {},
+            english: {},
+            physics: {},
+            chemistry: {},
+            cs: {}
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize with 47 sample students
-            const students = Array.from({length: 47}, (_, i) => ({
-                rollNo: `DU2023CS${String(i+1).padStart(3, '0')}`,
-                name: `Student ${i+1}`,
-                attendance: {}
-            }));
-
-            // DOM elements
-            const studentList = document.getElementById('student-list');
-            const subjectSelect = document.getElementById('subject');
-            const classDateInput = document.getElementById('class-date');
-            const addStudentBtn = document.getElementById('add-student');
-            const markAllBtn = document.getElementById('mark-all');
-            const exportExcelBtn = document.getElementById('export-excel');
-            const saveLocalBtn = document.getElementById('save-local');
-            const studentModal = document.getElementById('student-modal');
-            const newRollNo = document.getElementById('new-rollno');
-            const newName = document.getElementById('new-name');
-            const cancelAdd = document.getElementById('cancel-add');
-            const confirmAdd = document.getElementById('confirm-add');
-
             // Set today's date as default
-            classDateInput.valueAsDate = new Date();
-
-            // Render student list
-            function renderStudents() {
-                studentList.innerHTML = '';
-                students.forEach((student, index) => {
-                    const row = document.createElement('tr');
-                    row.className = 'student-row';
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.rollNo}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <input type="text" value="${student.name}" class="name-input bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none" data-index="${index}">
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex space-x-2">
-                                <button class="attendance-btn px-3 py-1 rounded-md ${student.attendance[getCurrentSession()] === 'present' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}" data-status="present" data-index="${index}">P</button>
-                                <button class="attendance-btn px-3 py-1 rounded-md ${student.attendance[getCurrentSession()] === 'absent' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}" data-status="absent" data-index="${index}">A</button>
-                                <button class="attendance-btn px-3 py-1 rounded-md ${student.attendance[getCurrentSession()] === 'late' ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}" data-status="late" data-index="${index}">L</button>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <button class="delete-student text-red-600 hover:text-red-800" data-index="${index}">Delete</button>
-                        </td>
-                    `;
-                    studentList.appendChild(row);
-                });
-
-                // Add event listeners to newly created elements
-                document.querySelectorAll('.name-input').forEach(input => {
-                    input.addEventListener('change', function() {
-                        const index = this.dataset.index;
-                        students[index].name = this.value;
-                        saveToLocalStorage();
-                    });
-                });
-
-                document.querySelectorAll('.attendance-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const status = this.dataset.status;
-                        const index = this.dataset.index;
-                        const session = getCurrentSession();
-                        
-                        // Update attendance status
-                        students[index].attendance[session] = status;
-                        
-                        // Update UI
-                        const buttons = this.parentNode.querySelectorAll('.attendance-btn');
-                        buttons.forEach(b => {
-                            b.className = b.dataset.status === status ? 
-                                `attendance-btn px-3 py-1 rounded-md bg-${status === 'present' ? 'green' : status === 'absent' ? 'red' : 'yellow'}-500 text-white` : 
-                                'attendance-btn px-3 py-1 rounded-md bg-gray-200 text-gray-700';
-                        });
-                        
-                        saveToLocalStorage();
-                    });
-                });
-
-                document.querySelectorAll('.delete-student').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        if (confirm('Are you sure you want to delete this student?')) {
-                            const index = this.dataset.index;
-                            students.splice(index, 1);
-                            renderStudents();
-                            saveToLocalStorage();
-                        }
-                    });
-                });
-            }
-
-            // Get current subject + date combination
-            function getCurrentSession() {
-                return `${subjectSelect.value}-${classDateInput.value}`;
-            }
-
-            // Mark all students present
-            markAllBtn.addEventListener('click', function() {
-                const session = getCurrentSession();
-                students.forEach(student => {
-                    student.attendance[session] = 'present';
-                });
-                renderStudents();
-                saveToLocalStorage();
-            });
-
-            // Export to Excel
-            exportExcelBtn.addEventListener('click', function() {
-                // Prepare data - transform attendance object into array
-                const exportData = students.map(student => {
-                    const row = {
-                        'Roll No': student.rollNo,
-                        'Name': student.name
-                    };
-                    
-                    // Get all unique session dates
-                    const sessions = [...new Set(
-                        Object.keys(student.attendance)
-                            .map(key => key.split('-')[1])
-                            .filter(date => date) // Filter out empty dates
-                    )].sort();
-                    
-                    // Add attendance for each session
-                    sessions.forEach(date => {
-                        const subject = subjectSelect.value;
-                        const sessionKey = `${subject}-${date}`;
-                        row[`${subject} (${date})`] = student.attendance[sessionKey] || 'N/A';
-                    });
-                    
-                    return row;
-                });
-
-                // Create worksheet
-                const ws = XLSX.utils.json_to_sheet(exportData);
-                
-                // Create workbook
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-                
-                // Generate file and download
-                XLSX.writeFile(wb, `DU_Attendance_${subjectSelect.value}_${classDateInput.value}.xlsx`);
-            });
-
-            // Save to localStorage
-            function saveToLocalStorage() {
-                localStorage.setItem('duAttendanceData', JSON.stringify({
-                    students,
-                    lastUpdated: new Date().toISOString()
-                }));
-            }
-
-            // Load from localStorage
-            function loadFromLocalStorage() {
-                const saved = localStorage.getItem('duAttendanceData');
-                if (saved) {
-                    const data = JSON.parse(saved);
-                    // Merge with existing students to preserve any additions
-                    const savedStudents = data.students || [];
-                    
-                    // Copy attendance records from saved students to current students
-                    savedStudents.forEach(savedStudent => {
-                        const existing = students.find(s => s.rollNo === savedStudent.rollNo);
-                        if (existing) {
-                            // Merge attendance
-                            existing.name = savedStudent.name;
-                            existing.attendance = {...existing.attendance, ...savedStudent.attendance};
-                        }
-                    });
-                }
-            }
-
-            // Add student modal
-            addStudentBtn.addEventListener('click', function() {
-                studentModal.classList.remove('hidden');
-            });
-
-            cancelAdd.addEventListener('click', function() {
-                studentModal.classList.add('hidden');
-                newRollNo.value = '';
-                newName.value = '';
-            });
-
-            confirmAdd.addEventListener('click', function() {
-                if (newRollNo.value && newName.value) {
-                    students.push({
-                        rollNo: newRollNo.value,
-                        name: newName.value,
-                        attendance: {}
-                    });
-                    renderStudents();
-                    saveToLocalStorage();
-                    studentModal.classList.add('hidde```
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DU Student Attendance System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
-    <style>
-        .student-row:hover {
-            background-color: #f0f9ff;
-        }
-        .attendance-btn {
-            transition: all 0.2s ease;
-        }
-        .attendance-btn:hover {
-            transform: scale(1.05);
-        }
-    </style>
-</head>
-<body class="bg-gray-50">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <header class="mb-8 text-center">
-            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/9b9a378a-5c6c-45c8-bf6e-01c2d9a551de.png" alt="University of Delhi logo with iconic brick-red architecture and white lettering" class="mx-auto mb-4 rounded-lg shadow-md" />
-            <h1 class="text-3xl font-bold text-gray-800">Student Attendance Management System</h1>
-            <p class="text-lg text-gray-600 mt-2">Department of Computer Science | Batch 2023</p>
-        </header>
-
-        <!-- Control Panel -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div class="flex flex-col md:flex-row gap-4 mb-6">
-                <div class="flex-1">
-                    <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Select Subject</label>
-                    <select id="subject" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="dsa">Data Structures & Algorithms</option>
-                        <option value="dbms">Database Management Systems</option>
-                        <option value="os">Operating Systems</option>
-                        <option value="cn">Computer Networks</option>
-                        <option value="se">Software Engineering</option>
-                    </select>
-                </div>
-                <div class="flex-1">
-                    <label for="class-date" class="block text-sm font-medium text-gray-700 mb-1">Class Date</label>
-                    <input type="date" id="class-date" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div class="flex items-end">
-                    <button id="add-student" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
-                        Add Student
-                    </button>
-                </div>
-            </div>
-
-            <div class="flex justify-between">
-                <button id="mark-all" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                    Mark All Present
-                </button>
-                <div class="flex gap-2">
-                    <button id="export-excel" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
-                        Export to Excel
-                    </button>
-                    <button id="save-local" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
-                        Save Locally
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Attendance Table -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll No.</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="student-list" class="bg-white divide-y divide-gray-200">
-                    <!-- Students will be added here -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Footer -->
-        <footer class="mt-12 text-center text-gray-500 text-sm">
-            <p>© 2023 University of Delhi - Department of Computer Science</p>
-            <p class="mt-1">Developed with ❤️ for education</p>
-        </footer>
-    </div>
-
-    <!-- Add Student Modal -->
-    <div id="student-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full">
-            <h2 class="text-xl font-bold mb-4">Add New Student</h2>
-            <div class="space-y-4">
-                <div>
-                    <label for="new-rollno" class="block text-sm font-medium text-gray-700">Roll Number</label>
-                    <input type="text" id="new-rollno" class="w-full px-4 py-2 border border-gray-300 rounded-md">
-                </div>
-                <div>
-                    <label for="new-name" class="block text-sm font-medium text-gray-700">Student Name</label>
-                    <input type="text" id="new-name" class="w-full px-4 py-2 border border-gray-300 rounded-md">
-                </div>
-                <div class="flex justify-end space-x-2 pt-4">
-                    <button id="cancel-add" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md">Cancel</button>
-                    <button id="confirm-add" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Add Student</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize with 47 sample students
-            const students = Array.from({length: 47}, (_, i) => ({
-                rollNo: `DU2023CS${String(i+1).padStart(3, '0')}`,
-                name: `Student ${i+1}`,
-                attendance: {}
-            }));
-
-            // DOM elements
-            const studentList = document.getElementById('student-list');
-            const subjectSelect = document.getElementById('subject');
-            const classDateInput = document.getElementById('class-date');
-            const addStudentBtn = document.getElementById('add-student');
-            const markAllBtn = document.getElementById('mark-all');
-            const exportExcelBtn = document.getElementById('export-excel');
-            const saveLocalBtn = document.getElementById('save-local');
-            const studentModal = document.getElementById('student-modal');
-            const newRollNo = document.getElementById('new-rollno');
-            const newName = document.getElementById('new-name');
-            const cancelAdd = document.getElementById('cancel-add');
-            const confirmAdd = document.getElementById('confirm-add');
-
-            // Set today's date as default
-            classDateInput.valueAsDate = new Date();
-
-            // Render student list
-            function renderStudents() {
-                studentList.innerHTML = '';
-                students.forEach((student, index) => {
-                    const row = document.createElement('tr');
-                    row.className = 'student-row';
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.rollNo}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <input type="text" value="${student.name}" class="name-input bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none" data-index="${index}">
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex space-x-2">
-                                <button class="attendance-btn px-3 py-1 rounded-md ${student.attendance[getCurrentSession()] === 'present' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}" data-status="present" data-index="${index}">P</button>
-                                <button class="attendance-btn px-3 py-1 rounded-md ${student.attendance[getCurrentSession()] === 'absent' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}" data-status="absent" data-index="${index}">A</button>
-                                <button class="attendance-btn px-3 py-1 rounded-md ${student.attendance[getCurrentSession()] === 'late' ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'}" data-status="late" data-index="${index}">L</button>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <button class="delete-student text-red-600 hover:text-red-800" data-index="${index}">Delete</button>
-                        </td>
-                    `;
-                    studentList.appendChild(row);
-                });
-
-                // Add event listeners to newly created elements
-                document.querySelectorAll('.name-input').forEach(input => {
-                    input.addEventListener('change', function() {
-                        const index = this.dataset.index;
-                        students[index].name = this.value;
-                        saveToLocalStorage();
-                    });
-                });
-
-                document.querySelectorAll('.attendance-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const status = this.dataset.status;
-                        const index = this.dataset.index;
-                        const session = getCurrentSession();
-                        
-                        // Update attendance status
-                        students[index].attendance[session] = status;
-                        
-                        // Update UI
-                        const buttons = this.parentNode.querySelectorAll('.attendance-btn');
-                        buttons.forEach(b => {
-                            b.className = b.dataset.status === status ? 
-                                `attendance-btn px-3 py-1 rounded-md bg-${status === 'present' ? 'green' : status === 'absent' ? 'red' : 'yellow'}-500 text-white` : 
-                                'attendance-btn px-3 py-1 rounded-md bg-gray-200 text-gray-700';
-                        });
-                        
-                        saveToLocalStorage();
-                    });
-                });
-
-                document.querySelectorAll('.delete-student').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        if (confirm('Are you sure you want to delete this student?')) {
-                            const index = this.dataset.index;
-                            students.splice(index, 1);
-                            renderStudents();
-                            saveToLocalStorage();
-                        }
-                    });
-                });
-            }
-
-            // Get current subject + date combination
-            function getCurrentSession() {
-                return `${subjectSelect.value}-${classDateInput.value}`;
-            }
-
-            // Mark all students present
-            markAllBtn.addEventListener('click', function() {
-                const session = getCurrentSession();
-                students.forEach(student => {
-                    student.attendance[session] = 'present';
-                });
-                renderStudents();
-                saveToLocalStorage();
-            });
-
-            // Export to Excel
-            exportExcelBtn.addEventListener('click', function() {
-                // Prepare data - transform attendance object into array
-                const exportData = students.map(student => {
-                    const row = {
-                        'Roll No': student.rollNo,
-                        'Name': student.name
-                    };
-                    
-                    // Get all unique session dates
-                    const sessions = [...new Set(
-                        Object.keys(student.attendance)
-                            .map(key => key.split('-')[1])
-                            .filter(date => date) // Filter out empty dates
-                    )].sort();
-                    
-                    // Add attendance for each session
-                    sessions.forEach(date => {
-                        const subject = subjectSelect.value;
-                        const sessionKey = `${subject}-${date}`;
-                        row[`${subject} (${date})`] = student.attendance[sessionKey] || 'N/A';
-                    });
-                    
-                    return row;
-                });
-
-                // Create worksheet
-                const ws = XLSX.utils.json_to_sheet(exportData);
-                
-                // Create workbook
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-                
-                // Generate file and download
-                XLSX.writeFile(wb, `DU_Attendance_${subjectSelect.value}_${classDateInput.value}.xlsx`);
-            });
-
-            // Save to localStorage
-            function saveToLocalStorage() {
-                localStorage.setItem('duAttendanceData', JSON.stringify({
-                    students,
-                    lastUpdated: new Date().toISOString()
-                }));
-            }
-
-            // Load from localStorage
-            function loadFromLocalStorage() {
-                const saved = localStorage.getItem('duAttendanceData');
-                if (saved) {
-                    const data = JSON.parse(saved);
-                    // Merge with existing students to preserve any additions
-                    const savedStudents = data.students || [];
-                    
-                    // Copy attendance records from saved students to current students
-                    savedStudents.forEach(savedStudent => {
-                        const existing = students.find(s => s.rollNo === savedStudent.rollNo);
-                        if (existing) {
-                            // Merge attendance
-                            existing.name = savedStudent.name;
-                            existing.attendance = {...existing.attendance, ...savedStudent.attendance};
-                        }
-                    });
-                }
-            }
-
-            // Add student modal
-            addStudentBtn.addEventListener('click', function() {
-                studentModal.classList.remove('hidden');
-            });
-
-            cancelAdd.addEventListener('click', function() {
-                studentModal.classList.add('hidden');
-                newRollNo.value = '';
-                newName.value = '';
-            });
-
-            confirmAdd.addEventListener('click', function() {
-                if (newRollNo.value && newName.value) {
-                    students.push({
-                        rollNo: newRollNo.value,
-                        name: newName.value,
-                        attendance: {}
-                    });
-                    renderStudents();
-                    saveToLocalStorage();
-                    studentModal.classList.add('hidden');
-                    newRollNo.value = '';
-                    newName.value = '';
-                } else {
-                    alert('Please enter both roll number and name');
-                }
-            });
-
-            // Save locally button
-            saveLocalBtn.addEventListener('click', function() {
-                saveToLocalStorage();
-                alert('Attendance data saved locally!');
-            });
-
-            // Load data and render
-            loadFromLocalStorage();
-            renderStudents();
-
-            // Re-render when subject or date changes
-            subjectSelect.addEventListener('change', renderStudents);
-            classDateInput.addEventListener('change', renderStudents);
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('attendanceDate').value = today;
+            document.getElementById('exportStartDate').value = today;
+            document.getElementById('exportEndDate').value = today;
+            
+            // Load initial data
+            loadStudents();
+            updateDashboardCounts();
         });
-    </script>
-</body>
-</html>
-```n');
-                    newRollNo.value = '';
-                    newName.value = '';
-                } else {
-                    alert('Please enter both roll number and name');
+
+        function loadStudents() {
+            const tbody = document.getElementById('studentList');
+            tbody.innerHTML = '';
+            
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${student.rollNo}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${student.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${student.department}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="editStudent(${student.id})" class="text-blue-600 hover:text-blue-800">Edit</button>
+                        <span class="mx-2">|</span>
+                        <button onclick="deleteStudentPrompt(${student.id})" class="text-red-600 hover:text-red-800">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            document.getElementById('studentCount').textContent = students.length;
+        }
+
+        function loadAttendance() {
+            const subject = document.getElementById('subjectSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+            const tbody = document.getElementById('attendanceList');
+            tbody.innerHTML = '';
+            
+            // Initialize if not exists
+            if (!attendanceData[subject][date]) {
+                attendanceData[subject][date] = {};
+            }
+            
+            students.forEach(student => {
+                const status = attendanceData[subject][date][student.id] || 'absent';
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${student.rollNo}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${student.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <select id="status-${student.id}" class="border rounded px-2 py-1 ${getStatusColorClass(status)}">
+                            <option value="present" ${status === 'present' ? 'selected' : ''}>P - Present</option>
+                            <option value="absent" ${status === 'absent' ? 'selected' : ''}>A - Absent</option>
+                            <option value="leave" ${status === 'leave' ? 'selected' : ''}>L - Leave</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="changeAttendanceStatus(${student.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded">
+                            Update
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            updateDashboardCounts();
+        }
+
+        function getStatusColorClass(status) {
+            switch(status) {
+                case 'present': return 'bg-green-100 text-green-800';
+                case 'absent': return 'bg-red-100 text-red-800';
+                case 'leave': return 'bg-yellow-100 text-yellow-800';
+                default: return '';
+            }
+        }
+
+        function changeAttendanceStatus(studentId) {
+            const subject = document.getElementById('subjectSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+            const status = document.getElementById(`status-${studentId}`).value;
+            
+            attendanceData[subject][date][studentId] = status;
+            
+            // Update UI
+            const selectElement = document.getElementById(`status-${studentId}`);
+            selectElement.className = `border rounded px-2 py-1 ${getStatusColorClass(status)}`;
+            
+            updateDashboardCounts();
+        }
+
+        function markAllPresent() {
+            const subject = document.getElementById('subjectSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+            
+            if (!attendanceData[subject][date]) {
+                attendanceData[subject][date] = {};
+            }
+            
+            students.forEach(student => {
+                attendanceData[subject][date][student.id] = 'present';
+                if (document.getElementById(`status-${student.id}`)) {
+                    document.getElementById(`status-${student.id}`).value = 'present';
+                    document.getElementById(`status-${student.id}`).className = 'border rounded px-2 py-1 bg-green-100 text-green-800';
                 }
             });
+            
+            updateDashboardCounts();
+        }
 
-            // Save locally button
-            saveLocalBtn.addEventListener('click', function() {
-                saveToLocalStorage();
-                alert('Attendance data saved locally!');
+        function saveAttendance() {
+            alert('Attendance data saved successfully!');
+            updateDashboardCounts();
+        }
+
+        function updateDashboardCounts() {
+            const subject = document.getElementById('subjectSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+            
+            if (attendanceData[subject] && attendanceData[subject][date]) {
+                const records = attendanceData[subject][date];
+                const presentCount = Object.values(records).filter(s => s === 'present').length;
+                document.getElementById('attendanceToday').textContent = presentCount;
+            } else {
+                document.getElementById('attendanceToday').textContent = '0';
+            }
+        }
+
+        function addNewStudentDialog() {
+            document.getElementById('modalTitle').textContent = 'Add New Student';
+            document.getElementById('editStudentId').value = '';
+            document.getElementById('editRollNo').value = '';
+            document.getElementById('editName').value = '';
+            document.getElementById('editDepartment').value = 'Computer Science';
+            
+            openModal('studentModal');
+        }
+
+        function editStudent(studentId) {
+            const student = students.find(s => s.id === studentId);
+            if (!student) return;
+            
+            document.getElementById('modalTitle').textContent = 'Edit Student';
+            document.getElementById('editStudentId').value = student.id;
+            document.getElementById('editRollNo').value = student.rollNo;
+            document.getElementById('editName').value = student.name;
+            document.getElementById('editDepartment').value = student.department;
+            
+            openModal('studentModal');
+        }
+
+        function saveStudent() {
+            const id = parseInt(document.getElementById('editStudentId').value);
+            const rollNo = document.getElementById('editRollNo').value.trim();
+            const name = document.getElementById('editName').value.trim();
+            const department = document.getElementById('editDepartment').value.trim();
+            
+            if (!rollNo || !name || !department) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            if (id) {
+                // Update existing
+                const index = students.findIndex(s => s.id === id);
+                if (index !== -1) {
+                    students[index] = { id, rollNo, name, department };
+                }
+            } else {
+                // Add new
+                const newId = Math.max(...students.map(s => s.id), 0) + 1;
+                students.push({ id: newId, rollNo, name, department });
+            }
+            
+            loadStudents();
+            closeModal('studentModal');
+        }
+
+        function deleteStudentPrompt(studentId) {
+            const student = students.find(s => s.id === studentId);
+            document.getElementById('confirmMessage').textContent = `Are you sure you want to delete ${student.name} (${student.rollNo})?`;
+            document.getElementById('confirmButton').onclick = function() { deleteStudent(studentId); };
+            openModal('confirmModal');
+        }
+
+        function deleteStudent(studentId) {
+            students = students.filter(s => s.id !== studentId);
+            loadStudents();
+            closeModal('confirmModal');
+        }
+
+        function generateExportData() {
+            const startDate = document.getElementById('exportStartDate').value;
+            const endDate = document.getElementById('exportEndDate').value;
+            const subject = document.getElementById('exportSubject').value;
+            
+            // Prepare data for export
+            let exportData = [];
+            let subjectsToExport = [];
+            
+            if (subject === 'all') {
+                subjectsToExport = ['math', 'english', 'physics', 'chemistry', 'cs'];
+            } else {
+                subjectsToExport = [subject];
+            }
+            
+            subjectsToExport.forEach(sub => {
+                const dates = Object.keys(attendanceData[sub]).filter(d => d >= startDate && d <= endDate);
+                
+                dates.forEach(date => {
+                    students.forEach(student => {
+                        const status = attendanceData[sub][date][student.id] || 'absent';
+                        exportData.push({
+                            'Date': date,
+                            'Subject': sub.charAt(0).toUpperCase() + sub.slice(1),
+                            'Roll No': student.rollNo,
+                            'Name': student.name,
+                            'Department': student.department,
+                            'Status': status === 'present' ? 'P' : status === 'absent' ? 'A' : 'L'
+                        });
+                    });
+                });
             });
+            
+            // Update UI with export options
+            const exportDiv = document.getElementById('exportResults');
+            exportDiv.innerHTML = '';
+            
+            if (exportData.length === 0) {
+                exportDiv.innerHTML = '<p class="text-gray-500">No attendance records found for selected criteria.</p>';
+                return;
+            }
+            
+            const card = document.createElement('div');
+            card.className = 'bg-white border rounded-lg p-4 shadow-sm';
+            card.innerHTML = `
+                <h3 class="font-semibold mb-2">Generated Report (${exportData.length} records)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                        Download Excel
+                    </button>
+                    <button onclick="printExportData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                        Print Report
+                    </button>
+                    <button onclick="copyToClipboard()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">
+                        Copy Data
+                    </button>
+                </div>
+            `;
+            exportDiv.appendChild(card);
+            
+            // Store exportData globally for download/print
+            window.currentExportData = exportData;
+        }
 
-            // Load data and render
-            loadFromLocalStorage();
-            renderStudents();
+        function exportToExcel() {
+            if (!window.currentExportData || window.currentExportData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(window.currentExportData);
+            XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+            
+            const dateStr = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `DU_Attendance_${dateStr}.xlsx`);
+        }
 
-            // Re-render when subject or date changes
-            subjectSelect.addEventListener('change', renderStudents);
-            classDateInput.addEventListener('change', renderStudents);
-        });
+        function printExportData() {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>DU Attendance Report</title>
+                        <style>
+                            body { font-family: Arial; margin: 20px; }
+                            h1 { color: #1a3b6d; }
+                            table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Delhi University Attendance Report</h1>
+                        <p>Generated on: ${new Date().toLocaleString()}</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    ${Object.keys(window.currentExportData[0]).map(k => `<th>${k}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${window.currentExportData.map(row => `
+                                    <tr>
+                                        ${Object.values(row).map(v => `<td>${v}</td>`).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function copyToClipboard() {
+            if (!window.currentExportData || window.currentExportData.length === 0) {
+                alert('No data to copy');
+                return;
+            }
+            
+            const headers = Object.keys(window.currentExportData[0]).join('\t');
+            const rows = window.currentExportData.map(row => Object.values(row).join('\t')).join('\n');
+            
+            navigator.clipboard.writeText(`${headers}\n${rows}`)
+                .then(() => alert('Copied to clipboard!'))
+                .catch(() => alert('Failed to copy to clipboard'));
+        }
+
+        function printCurrentAttendance() {
+            const subject = document.getElementById('subjectSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+            const subjectName = document.getElementById('subjectSelect').options[document.getElementById('subjectSelect').selectedIndex].text;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>DU Attendance - ${subjectName}</title>
+                        <style>
+                            body { font-family: Arial; margin: 20px; }
+                            h1 { color: #1a3b6d; }
+                            table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                            .present { background-color: #e6ffec; }
+                            .absent { background-color: #ffebe9; }
+                            .leave { background-color: #fff8e6; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Delhi University Attendance</h1>
+                        <h2>${subjectName} - ${date}</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Roll No.</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${students.map(student => {
+                                    const status = attendanceData[subject][date] && attendanceData[subject][date][student.id] || 'absent';
+                                    return `
+                                        <tr class="${status}">
+                                            <td>${student.rollNo}</td>
+                                            <td>${student.name}</td>
+                                            <td>${status === 'present' ? 'P' : status === 'absent' ? 'A' : 'L'} - ${status.charAt(0).toUpperCase() + status.slice(1)}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function confirmAction() {
+            // Handled by individual functions that call confirmModal
+        }
+
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Event listeners
+        document.getElementById('subjectSelect').addEventListener('change', loadAttendance);
+        document.getElementById('attendanceDate').addEventListener('change', loadAttendance);
     </script>
 </body>
 </html>
